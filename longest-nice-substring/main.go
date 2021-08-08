@@ -12,7 +12,8 @@ func main() {
 
 	var result string
 	for i, inputString := range input {
-		result = longestNiceSubstring(inputString)
+		//result = longestNiceSubstring(inputString)
+		result = longestNiceSubstring1(inputString)
 		if result != expected[i] {
 			fmt.Printf("Wrong result for %s. expected %s but got %s \n", inputString, expected[i], result)
 		} else {
@@ -91,4 +92,41 @@ func removeNotNiceRunes(s string) []string {
 func isUpper(c rune) bool {
 	return c < rune('a')
 	//return 'A' <= c && 'Z' >= c
+}
+
+// another interesting solution
+func longestNiceSubstring1(s string) string {
+	var lower, upper int32  // 2 * 24 bits for letter presence flags
+
+	if len(s) <= 1 {  // recursion stops here
+		return ""
+	}
+	for _,c := range s {  // go over the string to set upper and lower letter flags
+		if c < rune('a') { // isupper relying on c being a latin letter
+			upper |= 1 << (c - rune('A'))  // set the bit for 'seen the letter in upper case'
+		} else {  // islower
+			lower |= 1 << (c - rune('a'))  // set the bit for 'seen the letter in lower case'
+		}
+	}
+	for i,c := range s {
+		var bit int32  // bit corresponding to the letter
+		if c < rune('a') {
+			bit = 1 << (c - rune('A'))
+		} else {
+			bit = 1 << (c - rune('a'))
+		}
+		if (upper & bit) != (lower & bit) {  // the letter was not seen in upper or lower case
+			// use recursion to find nice substring to the left of the letter
+			ns1 := longestNiceSubstring1(s[:i])
+			// use recursion to find nice substring to the right of the letter
+			ns2 := longestNiceSubstring1(s[i+1:])
+			// return longest of the nice substrings
+			if len(ns1) < len(ns2) {
+				return ns2
+			}
+			return ns1
+		}
+	}
+	// entire string is nice: saw every letter in both cases
+	return s
 }
